@@ -1,0 +1,19 @@
+---
+- name: Install aptitude
+  apt:
+    name: aptitude
+
+- name: Update APT Package Manager repositories cache
+  apt:
+    update_cache: yes
+
+- name: Upgrade installed packages
+  apt:
+    upgrade: yes
+
+- name: Install low-level utilities
+  apt:
+    name: "{{ item }}"
+  with_items:
+    - zip
+    - unzip

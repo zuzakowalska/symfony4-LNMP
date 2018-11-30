@@ -1,0 +1,34 @@
+---
+- name: Add PHP 7 PPA repository
+  apt_repository:
+    repo: 'ppa:ondrej/php'
+
+- name: Install PHP packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - php7.2-cli
+    - php7.2-curl
+    - php7.2-fpm
+    - php7.2-intl
+    - php7.2-mysql
+    - php7.2-xml
+    - php7.2-mbstring
+    - php7.2-zip
+  notify: Restart PHP-FPM
+
+- name: Set date.timezone for CLI
+  become: true
+  lineinfile:
+    path: /etc/php/7.2/cli/php.ini
+    regexp: "date.timezone ="
+    line: "date.timezone = UTC"
+
+- name: Set date.timezone for FPM
+  become: true
+  lineinfile:
+    path: /etc/php/7.2/fpm/php.ini
+    regexp: "date.timezone ="
+    line: "date.timezone = UTC"
+  notify: Restart PHP-FPM

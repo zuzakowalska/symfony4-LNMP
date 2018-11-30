@@ -1,0 +1,56 @@
+---
+- name: Check for Composer
+  stat:
+    path: /usr/local/bin/composer
+  register: composer_stat
+
+- name: Download Composer
+  script: scripts/install_composer.sh
+  when: not composer_stat.stat.exists
+
+- name: Move Composer globally
+  become: true
+  command: "mv composer.phar /usr/local/bin/composer"
+  when: not composer_stat.stat.exists
+
+- name: Set Permissons on Composer
+  become: true
+  file:
+    path: /usr/local/bin/composer
+    mode: "a+x"
+  when: not composer_stat.stat.exists
+
+- name: Check if Symfony project dir exists
+  stat:
+    path: "{{ symfony_root_dir }}"
+  register: symfony_dir
+
+- name: Install Symfony4
+  become: false
+  composer:
+    working_dir: "{{ code_root_dir }}"
+    command: create-project
+    arguments: symfony/website-skeleton project
+  when: not symfony_dir.stat.exists
+
+- name: Make sure Composer is at its latest version
+  composer:
+    working_dir: "{{ symfony_root_dir }}"
+    command: self-update
+  when: composer_stat.stat.exists
+  register: composer_self_update
+  changed_when: "not composer_self_update.stdout is search('You are already using composer version')"
+
+- name: Install Composer's dependencies
+  become: false
+  composer:
+    working_dir: "{{ symfony_root_dir }}"
+    no_dev: no
+
+- name: Fix var directory permissions
+  file:
+    path: "{{ symfony_var_dir }}"
+    state: directory
+    mode: 777
+    recurse: yes
+  changed_when: false
